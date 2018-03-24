@@ -2,13 +2,10 @@
 
 namespace AppBundle\Controller;
 
+use AppBundle\Structs\Product;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
-
-use Symfony\Component\Form\Extension\Core\Type\DateType;
-use Symfony\Component\Form\Extension\Core\Type\SubmitType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
 
 class DefaultController extends Controller
 {
@@ -17,30 +14,71 @@ class DefaultController extends Controller
      */
     public function indexAction(Request $request)
     {
-        // replace this example code with whatever you need
         return $this->render('views/index', array(
             'base_dir' => realpath($this->container->getParameter('kernel.root_dir').'/..').DIRECTORY_SEPARATOR,
         ));
     }
+
     /**
-     * @Route("/", name="searchPage")
+     * @Route("/items", name="items")
      */
-    public function testIndexAction(Request $request){
-        $number = 1000;
-        return $this->render('pages/search_page.html.twig', array(
-            'number' => $number,
+    public function viewItems(Request $request){
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => "https://app.ecwid.com/api/v3/13039133/products?token=secret_dbZcq5Gxhcg8VfaMF7aGrxpp6qsFjnYp",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => array(
+                "cache-control: no-cache",
+                "postman-token: f294b327-7356-2762-2ce0-51d7ef19a67e"
+            ),
+        ));
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+
+        curl_close($curl);
+
+        if ($err) {
+            echo "cURL Error #:" . $err;
+        } else {
+            $response = json_decode($response, true);
+        }
+
+        $items = array();
+        foreach ($response['items'] as $item){
+            $product = new Product();
+            $product->setName($item['name']);
+            $product->setPrice($item['price']);
+            $product->setImage($item['thumbnailUrl']);
+            foreach ($item['attributes'] as $attr){
+                if($attr['name'] == "Store ID"){
+                    $product->setAliexpressId($attr['value']);
+                }
+            }
+            $items[] = $product;
+
+        }
+        return $this->render('pages/items.html.twig', array(
+            'products'=>$items
         ));
     }
 
-    public function newForm()
-    {
-        $form = $this->createFormBuilder($task)
-            ->setAction($this->generateUrl('homepage'))
-            ->setMethod('GET')
-            ->add('task', TextType::class)
-            ->add('dueDate', DateType::class)
-            ->add('save', SubmitType::class)
-            ->getForm();
+    /**
+     * @Route("/", name="searchPage")
+     */
+    public function searchByProductID(Request $request){
+        $number = 1000;
+        $id = $request->get('searchKey');
+        var_dump($id);
+        return $this->render('pages/search_page.html.twig', array(
+            'number' => $number,
+        ));
     }
 }
 
