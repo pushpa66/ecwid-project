@@ -13,7 +13,7 @@
         <div class="row">
             <div class="col-sm-2"></div>
             <div class="col-sm-8">
-                <form action="{{ url('searchPage') }}">
+                <form  id = "searchForm" action="{{ url('apiSearch') }}">
                     <div class="row">
                         <div class="col-sm-2">
                             <label for="productId">Product ID:</label>
@@ -26,12 +26,43 @@
                         </div>
                     </div>
                 </form>
+                <div id="result">
+                    {%  embed "pages/cart.html.twig" %}{% endembed %}
+                </div>
             </div>
             <div class="col-sm-2"></div>
         </div>
     </div>
+{% endblock %}
 
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        $(document).ready(function(){
+            $("#result").hide();
+        });
+        $('#searchForm').on('submit', function (e) {
+            e.preventDefault();
 
+            $.ajax({
+                url: e.currentTarget.action,
+                type: 'post',
+                dataType: 'json',
+                data: $(this).serialize()
+            }).done(function (data) {
+                console.log(data);
+                if(data.search == true){
+                    $('#result').show();
+                }
+                console.log("success");
+            }).fail(function (e) {
+                console.log("Error");
+                console.log(e);
+            }).always(function () {
+                console.log("complete");
+            })
+        });
+    </script>
 {% endblock %}
 
 {% block stylesheets %}

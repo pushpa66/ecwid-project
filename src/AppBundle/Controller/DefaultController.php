@@ -5,6 +5,7 @@ namespace AppBundle\Controller;
 use AppBundle\Structs\Product;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 class DefaultController extends Controller
@@ -70,15 +71,24 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/", name="searchPage")
+     * @Route("/search", name="search")
+     */
+    public function searchPage(Request $request){
+        return $this->render('pages/search_page.html.twig', array(
+            'search' => false
+        ));
+//        return $this->render('pages/cart.html.twig');
+    }
+
+    /**
+     * @Route("/api/search", name="apiSearch")
      */
     public function searchByProductID(Request $request){
-        $number = 1000;
-        $id = $request->get('searchKey');
-        var_dump($id);
-        return $this->render('pages/search_page.html.twig', array(
-            'number' => $number,
-        ));
+
+        $searchKey = $request->get('searchKey');
+        $response = array('status' => $searchKey, 'search' => true);
+
+        return new JsonResponse($response);
     }
 }
 
